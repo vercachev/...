@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { Mode } from "@/types";
 import type {
   AiDetectionResult,
@@ -94,12 +95,20 @@ export function CheckerApp() {
       </div>
 
       <div className="relative mx-auto flex min-h-dvh max-w-3xl flex-col items-center px-4 py-12 md:py-16">
-        <header className="mb-10 text-center">
+        <header className="mb-10 flex flex-col items-center text-center">
+          <Image
+            src="/logo.png"
+            alt="Prism"
+            width={72}
+            height={72}
+            className="mb-4 rounded-2xl shadow-sm"
+            priority
+          />
           <h1 className="text-2xl font-semibold tracking-tight text-neutral-800 md:text-3xl">
-            English Check
+            Prism
           </h1>
           <p className="mt-2 text-sm text-neutral-500">
-            Инструменты для проверки текстов и переводов
+            Проверка текстов, переводов и уровня английского
           </p>
         </header>
 

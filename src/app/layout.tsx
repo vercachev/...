@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "English Check — инструменты для учителя",
+  title: "Prism — проверка текстов для учителя английского",
   description:
-    "Проверка текстов на ИИ, оценка перевода и уровень английского (CEFR)",
+    "ИИ-детектор, проверка перевода EN↔RU и оценка уровня CEFR",
 };
 
 export default function RootLayout({
