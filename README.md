@@ -14,7 +14,7 @@
 
 - **Next.js 15** (App Router) — деплой на [Vercel](https://vercel.com)
 - **Tailwind CSS 4** — Liquid Glass UI
-- **Google Gemini API** (бесплатный тариф) — анализ текстов
+- **Groq API** (бесплатно, основной) + **Gemini** (запасной)
 
 ## Быстрый старт
 
@@ -27,23 +27,25 @@ npm run dev
 
 Откройте [http://localhost:3000](http://localhost:3000).
 
-### API-ключ Gemini (бесплатно)
+### API-ключи (бесплатно)
 
-1. Перейдите на [Google AI Studio](https://aistudio.google.com/apikey)
-2. Создайте API-ключ
-3. Добавьте в `.env.local`:
+**Рекомендуем Groq** — стабильнее на бесплатном тарифе:
 
-```
-GEMINI_API_KEY=ваш_ключ
-```
+1. [console.groq.com/keys](https://console.groq.com/keys) → Create API Key
+2. В Vercel → Environment Variables → `GROQ_API_KEY`
 
-Бесплатный тариф Gemini: по умолчанию `gemini-2.5-flash-lite` с автопереключением на запасные модели при лимите.
+**Запасной вариант — Gemini:**
+
+1. [Google AI Studio](https://aistudio.google.com/apikey) → API-ключ
+2. `GEMINI_API_KEY` в Vercel
+
+Можно добавить оба — сайт сначала использует Groq.
 
 ## Деплой на Vercel
 
 1. Загрузите репозиторий на GitHub
 2. Импортируйте проект в [Vercel](https://vercel.com/new)
-3. В **Settings → Environment Variables** добавьте `GEMINI_API_KEY`
+3. В **Settings → Environment Variables** добавьте `GROQ_API_KEY` (рекомендуется) и/или `GEMINI_API_KEY`
 4. Deploy
 
 ## Приватность

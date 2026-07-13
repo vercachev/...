@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { generateJson } from "@/lib/gemini";
+import { generateJson } from "@/lib/llm";
 import { errorResponse, validateText } from "@/lib/api-utils";
 import {
   buildAssessmentPrompt,
