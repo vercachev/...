@@ -209,7 +209,7 @@ function sanitizeError(message: string): string {
   ) {
     if (message.includes("Лимит") || message.includes("API-ключ")) return message;
     if (message.includes("429") || message.includes("quota")) {
-      return "Лимит бесплатного API исчерпан. Подождите минуту и попробуйте снова.";
+      return "Слишком много запросов к Gemini. Подождите минуту — лимит привязан к API-ключу, не к сайту.";
     }
     return "Сервис анализа временно недоступен. Попробуйте через минуту.";
   }

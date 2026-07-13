@@ -1,12 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Ordered by free-tier friendliness; 1.5-flash is deprecated (404 on v1beta)
-const DEFAULT_MODELS = [
-  "gemini-2.5-flash-lite",
-  "gemini-2.5-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-2.0-flash",
-] as const;
+// Primary model for free tier; fallbacks only when model is unavailable (404), NOT on quota errors
+const PRIMARY_MODEL = "gemini-2.5-flash-lite";
+const FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash-lite"] as const;
 
 let client: GoogleGenerativeAI | null = null;
 
@@ -24,10 +20,8 @@ function getClient() {
 }
 
 function getModelList(): string[] {
-  if (process.env.GEMINI_MODEL) {
-    return [process.env.GEMINI_MODEL, ...DEFAULT_MODELS];
-  }
-  return [...DEFAULT_MODELS];
+  const primary = process.env.GEMINI_MODEL || PRIMARY_MODEL;
+  return [...new Set([primary, ...FALLBACK_MODELS])];
 }
 
 function getModel(modelName: string) {
@@ -64,7 +58,7 @@ function toUserError(err: unknown): Error {
     const seconds = parseRetrySeconds(message);
     const wait = seconds ? ` Подождите ~${seconds} сек.` : " Подождите минуту.";
     return new Error(
-      `Лимит бесплатного API Gemini исчерпан.${wait} Попробуйте снова чуть позже.`
+      `Слишком много запросов к Gemini (лимит бесплатного тарифа).${wait} Лимит привязан к API-ключу, а не к сайту.`
     );
   }
 
@@ -89,30 +83,46 @@ async function generateWithModel(modelName: string, prompt: string): Promise<str
   return result.response.text();
 }
 
+async function generateWithRetry(modelName: string, prompt: string): Promise<string> {
+  try {
+    return await generateWithModel(modelName, prompt);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+
+    // One retry after rate-limit cooldown — same model only
+    if (isRateLimit(message)) {
+      const seconds = parseRetrySeconds(message) ?? 10;
+      await sleep(Math.min(seconds * 1000, 20000));
+      return await generateWithModel(modelName, prompt);
+    }
+
+    throw err;
+  }
+}
+
 export async function generateJson<T>(prompt: string): Promise<T> {
-  const models = [...new Set(getModelList())];
+  const models = getModelList();
   let lastError: unknown;
 
   for (const modelName of models) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const text = await generateWithModel(modelName, prompt);
-        return parseJsonResponse<T>(text);
-      } catch (err) {
-        lastError = err;
-        const message = err instanceof Error ? err.message : String(err);
+    try {
+      const text = await generateWithRetry(modelName, prompt);
+      return parseJsonResponse<T>(text);
+    } catch (err) {
+      lastError = err;
+      const message = err instanceof Error ? err.message : String(err);
 
-        if (isModelUnavailable(message)) break;
-
-        if (isRateLimit(message) && attempt === 0) {
-          const seconds = parseRetrySeconds(message) ?? 5;
-          await sleep(Math.min(seconds * 1000, 15000));
-          continue;
-        }
-
-        if (isRateLimit(message)) break;
-        break;
+      // Quota is per API key — trying other models only makes it worse
+      if (isRateLimit(message)) {
+        throw toUserError(err);
       }
+
+      // Model deprecated / missing — try next
+      if (isModelUnavailable(message)) {
+        continue;
+      }
+
+      throw toUserError(err);
     }
   }
 
