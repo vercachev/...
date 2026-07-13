@@ -65,11 +65,11 @@ export function CheckerApp() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ошибка анализа");
+      if (!res.ok) throw new Error(sanitizeError(data.error || "Ошибка анализа"));
 
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Неизвестная ошибка");
+      setError(sanitizeError(err instanceof Error ? err.message : "Неизвестная ошибка"));
     } finally {
       setLoading(false);
     }
@@ -197,4 +197,21 @@ function Spinner() {
       />
     </svg>
   );
+}
+
+function sanitizeError(message: string): string {
+  if (
+    message.includes("GoogleGenerativeAI") ||
+    message.includes("generativelanguage.googleapis.com") ||
+    message.includes("429") ||
+    message.includes("404") ||
+    message.includes("quota")
+  ) {
+    if (message.includes("Лимит") || message.includes("API-ключ")) return message;
+    if (message.includes("429") || message.includes("quota")) {
+      return "Лимит бесплатного API исчерпан. Подождите минуту и попробуйте снова.";
+    }
+    return "Сервис анализа временно недоступен. Попробуйте через минуту.";
+  }
+  return message;
 }
